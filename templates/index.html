@@ -23,6 +23,8 @@
             d = new Date();
 
             $("#all_plot").attr("src", "static/camphoto.jpg?"+d.getTime());
+            $("#all_plot2").attr("src", "static/camphoto2.jpg?"+d.getTime());
+
 
 
         });
@@ -42,6 +44,11 @@ Time: <span id=time_box>0</span>
 
 <div class="column">
     <img id="all_plot" src="static/camphoto.jpg"   style="width:50%; left: 0;"/>
+<!--    <img id="all_plot_pressure" src="static/camphoto.jpg"   style="width:100%; left: 0;"/>-->
+</div>
+
+<div class="column">
+    <img id="all_plot2" src="static/camphoto2.jpg"   style="width:50%; left: 0;"/>
 <!--    <img id="all_plot_pressure" src="static/camphoto.jpg"   style="width:100%; left: 0;"/>-->
 </div>
 <!--<div class="column">-->
