@@ -35,7 +35,7 @@ def return_one():
 def read_camera():
     while True:
         # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cap = cv2.VideoCapture("/dev/video2")
+        cap = cv2.VideoCapture("/dev/video0")
         # cap = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:1.1:1.0-video-index0")
         # cap = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0")  # cam3
 
@@ -58,13 +58,13 @@ def read_camera():
             fontScale = 1
             color = (255, 0, 255)
             thickness = 2
-            now = datetime.datetime.now()
+            now = datetime.datetime.now() # now.strftime("%m/%d/%Y, %H:%M:%S")
             frame_cropped = crop_img(frame, 0.52, 0.5, 0.32, 0.32)
             frame = cv2.putText(frame_cropped, 'Last updated ' + now.strftime("%m/%d/%Y, %H:%M:%S"), org, font,
                                 fontScale, color, thickness, cv2.LINE_AA)
             # print(frame.shape[0])
             # print(frame.shape[1])
-            cwd = "/home/pereval/PycharmProjects/pythonProject/cmfx_monitoring"
+            cwd = "/home/pereval/PycharmProjects/cmfx_monitoring"
             
             cv2.imwrite(cwd + '/static/camphoto_temp2.jpg', frame)
 
@@ -76,11 +76,13 @@ def read_camera():
                 except PermissionError:
                     time.sleep(0.1)
                     print('Got the permission error, not writing this file for now')
-
+                except FileNotFoundError:
+                    time.sleep(1)
+                    print('Files do not exist')
         # cam2
         time.sleep(1)
 
-        cap2 = cv2.VideoCapture("/dev/video4")
+        cap2 = cv2.VideoCapture("/dev/video2")
         # cap2 = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:1.3:1.0-video-index0")
         # cap2 = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0")  # cam3
 
@@ -106,7 +108,7 @@ def read_camera():
             frame_cropped = crop_img(frame, 0.45, 0.5, 0.32, 0.32)
             frame = cv2.putText(frame_cropped, 'Last updated ' + now.strftime("%m/%d/%Y, %H:%M:%S"), org, font,
                                 fontScale, color, thickness, cv2.LINE_AA)
-            cwd = "/home/pereval/PycharmProjects/pythonProject/cmfx_monitoring"
+            cwd = "/home/pereval/PycharmProjects/cmfx_monitoring"
 
             cv2.imwrite(cwd + '/static/camphoto_temp.jpg', frame)
 
@@ -149,11 +151,16 @@ def sending_emails():
             sent_today = False
         # if it is noon and we haven't sent today, lets send!
         elif ssm > 12 * 3600 and not sent_today:
-            destination = ['artur_email', 'artur', 'carlos_email']
+            destination = ['artur_email', 'carlos_email', 'artur']
 
-            smtp_code.sendmail(destination)
-            print('I just sent the emails')
-            sent_today = True
+            if smtp_code.sendmail(destination):
+                print('I just sent the emails')
+                sent_today = True
+            else:
+                print(now)
+                print('Something went wrong with the emails')
+                time.sleep(30)
+                continue
         else:
         # otherwise lets sleep
             time.sleep(10)
@@ -170,7 +177,7 @@ if __name__ == "__main__":
     camera_update_worker.start()
     print('Camera updater started')
 
-    time.sleep(10)
+    time.sleep(20)
     email_send_worker = threading.Thread(target=sending_emails, args=())
     email_send_worker.start()
     print('Emailer is working')
