@@ -32,6 +32,193 @@ def return_one():
                    )
 
 
+@app.route('/video')
+def video():
+    return render_template('video.html')
+
+
+
+@app.route('/record_cameras')
+def record_cameras():
+    N_exp = request.args.get("n", 0, type=float)
+    discharging = request.args.get("dsc", 0, type=float)
+    disc_duration = request.args.get("dt", 0, type=float)
+    now = datetime.datetime.now()
+    ssm = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+
+    print(ssm)
+    print(N_exp)
+
+    camera_device = "/dev/video4"
+    camera_device2 = "/dev/video6"
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    if discharging == 1:
+        save_fldr = "/cmfx/video/exp" + str(N_exp) + "_" + timestr
+        os.mkdir(save_fldr)
+    else:
+        save_fldr = "/cmfx/video/test/exp" + str(N_exp) + "_" + timestr
+        os.mkdir(save_fldr)
+
+    duration = 10
+    # start_time = datetime.datetime.now()
+    # for writing_ind in range(30):
+    #     output_file = save_fldr + "/NN_260fps" + str(writing_ind) + ".avi"
+    #
+    #     file_written = capture_and_save_video(camera_device, output_file, duration, resolution=(640, 360), fps=260)
+    #     end_time = datetime.datetime.now()
+    #     print("Time taken", end_time-start_time)
+    #     if file_written:
+    #         break
+    #     else:
+    #         continue
+    output_file = save_fldr + "/NN_260fps.avi"
+    output_file2 = save_fldr + "/NN_090fps.avi"
+    # file_written = capture_and_save_video(camera_device, output_file, duration, resolution=(640, 360), fps=260)
+    resolution260 = (640, 360)
+    resolution90 = (640, 480)
+    fps260 = 260
+    fps90 = 90
+
+    north_cam260worker = threading.Thread(target=capture_and_save_video, args=([camera_device, output_file, duration, resolution260, fps260]))
+    north_cam260worker.start()
+
+    time.sleep(0.01)
+
+    north_cam120worker = threading.Thread(target=capture_and_save_video, args=([camera_device2, output_file2, duration, resolution90, fps90]))
+    north_cam120worker.start()
+
+    return jsonify(time=now, n=N_exp, dsc=discharging, duration=disc_duration)
+
+
+def capture_and_save_video(camera_device, output_file, duration, resolution, fps):
+    # record_video(filename='output.mp4', duration=10):
+    # Define the video capture device
+    # start_time = cv2.getTickCount()
+
+    time_started = datetime.datetime.now()
+    reading_times = []
+    writing_times = []
+    display_times = []
+    frame_to_frame_times = []
+
+    frames = []
+    for cam_reach_attempt in range(60):
+        print(cam_reach_attempt)
+        print(fps)
+        camera_reached = True
+        cap_north = cv2.VideoCapture(camera_device, cv2.CAP_V4L2)
+        cap_north.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        # %%%%%%%
+        # cap = cv2.VideoCapture(camera_mount, cv2.CAP_V4L2)  # Use '0' for the default camera, change if necessary
+        # cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        # %%%%%%%
+        # Check if the camera is opened successfully
+        if not cap_north.isOpened():
+            print("Error: Could not open the camera")
+            continue
+        # else:
+        #     time.sleep(0.005)
+
+        cap_north.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
+        cap_north.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
+        cap_north.set(cv2.CAP_PROP_FPS, fps)
+        # cap_north.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
+        # cap_north.set(cv2.CAP_PROP_GAIN, 0)
+        # cap_north.set(cv2.CAP_PROP_BRIGHTNESS, -64)
+        # cap_north.set(cv2.CAP_PROP_EXPOSURE, 2047)
+
+        # Define the codec and create VideoWriter object
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+
+        out = cv2.VideoWriter(output_file, fourcc, fps, resolution)
+
+        # out = cv2.VideoWriter(output_file)
+        # Record video for the specified duration
+        start_time = cv2.getTickCount() / cv2.getTickFrequency()
+        print(start_time)
+
+        # new
+        while True:
+            time_attempted_to_reach_frame = datetime.datetime.now()
+            ret, frame = cap_north.read()
+            time_after_read = datetime.datetime.now()
+            reading_times.append((time_after_read - time_attempted_to_reach_frame).total_seconds() * 1000)
+            if not ret:
+                print("Error: Cannot read frame.")
+                camera_reached = False
+                break
+
+            # Write the frame
+            frames.append(frame)
+            # out.write(frame)
+            time_to_write = datetime.datetime.now()
+            writing_times.append((time_to_write - time_after_read).total_seconds() * 1000)
+            # Display the frame
+            # cv2.imshow('frame', frame)
+
+            time_to_show = datetime.datetime.now()
+            display_times.append((time_to_show - time_to_write).total_seconds() * 1000)
+            # Check for 10 seconds recording limit
+            current_time = cv2.getTickCount() / cv2.getTickFrequency()
+            if (current_time - start_time) > duration:
+                # if (time_started - time_to_show).total_seconds() >= record_duration:
+                # print("Time limit reached")
+                # print()
+                # print(cv2.getTickFrequency())
+                break
+
+            # Break the loop if 'q' key is pressed
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     break
+            frame_to_frame_times.append((datetime.datetime.now() - time_attempted_to_reach_frame).total_seconds() * 1000)
+
+        if not camera_reached:
+            continue
+        # old
+        # while True:
+        #     ret, frame = cap_north.read()
+        #     if not ret:
+        #         print('camera returned none')
+        #         successfull_read = False
+        #         return False
+        #     out.write(frame)
+        #     current_time = cv2.getTickCount() / cv2.getTickFrequency()
+        #     # print(current_time)
+        #     if (current_time - start_time) > duration:
+        #         break
+
+            # Release the video capture and writer objects
+        print('Now lets write the file')
+        print(len(frames))
+        for frame in frames:
+            # cv2.imshow('frame', frame)
+            out.write(frame)
+        count = 0
+
+        if True:
+            fldr = output_file[0:-13] + "/NN_" + str(fps)
+
+            os.mkdir(fldr)
+            for frame in frames:
+                cv2.imwrite(fldr + "/frame%d.jpg" % count, frame)
+                count += 1
+                
+
+        out.release()
+        cap_north.release()
+        # Close all OpenCV windows
+        cv2.destroyAllWindows()
+        # print(f"Video recording completed: {filename}")
+        output_file2 = output_file[0:-3] + ".bin"
+
+        # with open('output_file2, 'w', newline='') as f:
+        #     writer = csv.writer(f)
+        #     writer.writerows(a)
+
+        return True
+    return False
+
 def read_camera():
     while True:
         # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -139,7 +326,12 @@ def crop_img(frame, mid_x, mid_y, size_x, size_y):
 
 
 def sending_emails():
-    sent_today = False
+    now = datetime.datetime.now()
+    ssm = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    if ssm > 12*3600:
+        sent_today = True
+    else:
+        sent_today = False
 
     while True:
         now = datetime.datetime.now()
@@ -152,6 +344,7 @@ def sending_emails():
         # if it is noon and we haven't sent today, lets send!
         elif ssm > 12 * 3600 and not sent_today:
             destination = ['artur_email', 'carlos_email', 'artur']
+            # destination = ['artur_email']
 
             if smtp_code.sendmail(destination):
                 print('I just sent the emails')

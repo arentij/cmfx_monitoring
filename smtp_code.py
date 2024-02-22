@@ -82,9 +82,9 @@ def sendmail(destination=['artur_email']):
 
     # now = datetime.datetime.now()  # now.strftime("%m/%d/%Y, %H:%M:%S")
     timestr = time.strftime("%Y%m%d-%H%M%S")
-
-    f1_log_name = "/home/pereval/PycharmProjects/cmfx_monitoring/img_logs/C1" + timestr + ".jpg"
-    f2_log_name = "/home/pereval/PycharmProjects/cmfx_monitoring/img_logs/C2" + timestr + ".jpg"
+    # /cmfx/pressure/logs
+    f1_log_name = "/cmfx/pressure/logs/C1" + timestr + ".jpg"
+    f2_log_name = "/cmfx/pressure/logs/C2" + timestr + ".jpg"
     shutil.copyfile(f1_name, f1_log_name)
     shutil.copyfile(f2_name, f2_log_name)
 
