@@ -1,34 +1,29 @@
 import cv2
-import threading
 
-class camThread(threading.Thread):
-    def __init__(self, previewName, camID):
-        threading.Thread.__init__(self)
-        self.previewName = previewName
-        self.camID = camID
-    def run(self):
-        print("Starting " + self.previewName)
-        camPreview(self.previewName, self.camID)
+# Open the video capture object using the device address
+cap = cv2.VideoCapture('/dev/video4')
 
+# Check if the camera is opened successfully
+if not cap.isOpened():
+    print("Error: Unable to open camera")
+    exit()
 
-def camPreview(previewName, camID):
-    cv2.namedWindow(previewName)
-    cam = cv2.VideoCapture(camID)
-    if cam.isOpened():  # try to get the first frame
-        rval, frame = cam.read()
-    else:
-        rval = False
+# Read and display frames from the camera
+while True:
+    ret, frame = cap.read()
 
-    while rval:
-        cv2.imshow(previewName, frame)
-        rval, frame = cam.read()
-        key = cv2.waitKey(20)
-        if key == 27:  # exit on ESC
-            break
-    cv2.destroyWindow(previewName)
+    # Check if the frame is valid
+    if not ret:
+        print("Error: Unable to read frame")
+        break
 
-# Create two threads as follows
-thread1 = camThread("Camera 1", "/dev/video4")
-thread2 = camThread("Camera 2", "/dev/video6")
-thread1.start()
-thread2.start()
+    # Display the frame
+    cv2.imshow('Frame', frame)
+
+    # Check for the 'q' key to exit
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release the capture object and close all windows
+cap.release()
+cv2.destroyAllWindows()

@@ -37,7 +37,6 @@ def video():
     return render_template('video.html')
 
 
-
 @app.route('/record_cameras')
 def record_cameras():
     N_exp = request.args.get("n", 0, type=float)
@@ -49,8 +48,12 @@ def record_cameras():
     print(ssm)
     print(N_exp)
 
-    camera_device = "/dev/video4"
-    camera_device2 = "/dev/video6"
+    camera_device = "/dev/video6"
+    camera_device2 = "/dev/video16"
+    camera_device3 = "/dev/video10"
+    camera_device4 = "/dev/video8"
+    camera_device5 = "/dev/video4"
+
     timestr = time.strftime("%Y%m%d-%H%M%S")
     if discharging == 1:
         save_fldr = "/cmfx/video/exp" + str(N_exp) + "_" + timestr
@@ -71,20 +74,45 @@ def record_cameras():
     #         break
     #     else:
     #         continue
-    output_file = save_fldr + "/NN_260fps.avi"
-    output_file2 = save_fldr + "/NN_090fps.avi"
+    output_file = save_fldr + "/N1_260fps.avi"
+    output_file3 = save_fldr + "/N2_260fps.avi"
+    output_file4 = save_fldr + "/N3_260fps.avi"
+    output_file5 = save_fldr + "/N4_260fps.avi"
+
+    output_file2 = save_fldr + "/N1_090fps.avi"
     # file_written = capture_and_save_video(camera_device, output_file, duration, resolution=(640, 360), fps=260)
     resolution260 = (640, 360)
     resolution90 = (640, 480)
     fps260 = 260
     fps90 = 90
 
-    north_cam260worker = threading.Thread(target=capture_and_save_video, args=([camera_device, output_file, duration, resolution260, fps260]))
-    north_cam260worker.start()
+    north_cam1_260worker = threading.Thread(target=capture_and_save_video,
+                                          args=([camera_device, output_file, duration, resolution260, fps260]))
+    north_cam1_260worker.start()
+    time.sleep(0.002)
+
+    north_cam2_260_worker = threading.Thread(target=capture_and_save_video,
+                                            args=([camera_device3, output_file3, duration, resolution260, fps260]))
+    north_cam2_260_worker.start()
+
 
     time.sleep(0.01)
 
-    north_cam120worker = threading.Thread(target=capture_and_save_video, args=([camera_device2, output_file2, duration, resolution90, fps90]))
+    south_cam1_260_worker = threading.Thread(target=capture_and_save_video,
+                                             args=([camera_device4, output_file4, duration, resolution260, fps260]))
+    south_cam1_260_worker.start()
+
+    time.sleep(0.01)
+
+    center1_260_worker = threading.Thread(target=capture_and_save_video,
+                                             args=([camera_device5, output_file5, duration, resolution260, fps260]))
+    center1_260_worker.start()
+
+    time.sleep(0.01)
+
+
+    north_cam120worker = threading.Thread(target=capture_and_save_video,
+                                          args=([camera_device2, output_file2, duration, resolution90, fps90]))
     north_cam120worker.start()
 
     return jsonify(time=now, n=N_exp, dsc=discharging, duration=disc_duration)
@@ -171,7 +199,8 @@ def capture_and_save_video(camera_device, output_file, duration, resolution, fps
             # Break the loop if 'q' key is pressed
             # if cv2.waitKey(1) & 0xFF == ord('q'):
             #     break
-            frame_to_frame_times.append((datetime.datetime.now() - time_attempted_to_reach_frame).total_seconds() * 1000)
+            frame_to_frame_times.append(
+                (datetime.datetime.now() - time_attempted_to_reach_frame).total_seconds() * 1000)
 
         if not camera_reached:
             continue
@@ -188,7 +217,7 @@ def capture_and_save_video(camera_device, output_file, duration, resolution, fps
         #     if (current_time - start_time) > duration:
         #         break
 
-            # Release the video capture and writer objects
+        # Release the video capture and writer objects
         print('Now lets write the file')
         print(len(frames))
         for frame in frames:
@@ -197,13 +226,13 @@ def capture_and_save_video(camera_device, output_file, duration, resolution, fps
         count = 0
 
         if True:
-            fldr = output_file[0:-13] + "/NN_" + str(fps)
-
+            fldr = output_file[0:-4]
+            # print(output_file)
+            # print(fldr)
             os.mkdir(fldr)
             for frame in frames:
                 cv2.imwrite(fldr + "/frame%d.jpg" % count, frame)
                 count += 1
-                
 
         out.release()
         cap_north.release()
@@ -219,10 +248,12 @@ def capture_and_save_video(camera_device, output_file, duration, resolution, fps
         return True
     return False
 
+
 def read_camera():
     while True:
         # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cap = cv2.VideoCapture("/dev/video0")
+        cap = cv2.VideoCapture("/dev/video2")  # this is the camera2
+        # cap = cv2.VideoCapture("/dev/mycam1")
         # cap = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:1.1:1.0-video-index0")
         # cap = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0")  # cam3
 
@@ -245,14 +276,14 @@ def read_camera():
             fontScale = 1
             color = (255, 0, 255)
             thickness = 2
-            now = datetime.datetime.now() # now.strftime("%m/%d/%Y, %H:%M:%S")
+            now = datetime.datetime.now()  # now.strftime("%m/%d/%Y, %H:%M:%S")
             frame_cropped = crop_img(frame, 0.52, 0.5, 0.32, 0.32)
             frame = cv2.putText(frame_cropped, 'Last updated ' + now.strftime("%m/%d/%Y, %H:%M:%S"), org, font,
                                 fontScale, color, thickness, cv2.LINE_AA)
             # print(frame.shape[0])
             # print(frame.shape[1])
             cwd = "/home/pereval/PycharmProjects/cmfx_monitoring"
-            
+
             cv2.imwrite(cwd + '/static/camphoto_temp2.jpg', frame)
 
             for attempt in range(10):
@@ -269,7 +300,7 @@ def read_camera():
         # cam2
         time.sleep(1)
 
-        cap2 = cv2.VideoCapture("/dev/video2")
+        cap2 = cv2.VideoCapture("/dev/video6")  # this is cam1
         # cap2 = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:1.3:1.0-video-index0")
         # cap2 = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0")  # cam3
 
@@ -328,7 +359,7 @@ def crop_img(frame, mid_x, mid_y, size_x, size_y):
 def sending_emails():
     now = datetime.datetime.now()
     ssm = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-    if ssm > 12*3600:
+    if ssm > 12 * 3600:
         sent_today = True
     else:
         sent_today = False
@@ -355,7 +386,7 @@ def sending_emails():
                 time.sleep(30)
                 continue
         else:
-        # otherwise lets sleep
+            # otherwise lets sleep
             time.sleep(10)
     return True
 

@@ -3,7 +3,7 @@ import cv2, os
 from matplotlib import pyplot as plt
 # Create a VideoCapture object
 # cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-cap = cv2.VideoCapture("/dev/video6") # cam 2 is video2 cam1 is video4
+cap = cv2.VideoCapture("/dev/video0") # cam 2 is video2 cam1 is video4
 # cap = cv2.VideoCapture("/dev/video4") # cam 1
 # cap = cv2.VideoCapture("/dev/v4l/by-id/usb-Arducam_Arducam_5MP_Camera_Module_YL20230518V0-video-index0") # cam2
 # cap = cv2.VideoCapture("/dev/v4l/by-id/usb-Arducam_Arducam_5MP_Camera_Module_YL20230518V0-video-index1") # cam2
@@ -12,8 +12,8 @@ cap = cv2.VideoCapture("/dev/video6") # cam 2 is video2 cam1 is video4
 # cap = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0")  # cam3
 #                          "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2.3:1.0-video-index0"
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc(*"MJPG"))
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 # cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
 # cap.set(cv2.CAP_PROP_GAIN, 0)
 # cap.set(cv2.CAP_PROP_BRIGHTNESS, 0)
