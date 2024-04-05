@@ -48,10 +48,10 @@ def record_cameras():
     print(ssm)
     print(N_exp)
 
-    camera_device  = "/dev/video10"
-    camera_device2 = "/dev/video2"
-    camera_device3 = "/dev/video0"
-    camera_device4 = "/dev/video8"
+    camera_device  = "/dev/video3"
+    camera_device2 = "/dev/video5"
+    camera_device3 = "/dev/video9"
+    # camera_device4 = "/dev/video0"
     # camera_device5 = "/dev/video4"
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
@@ -77,7 +77,7 @@ def record_cameras():
     output_file  = save_fldr + "/N1_260fps.avi"
     output_file2 = save_fldr + "/N2_260fps.avi"
     output_file3 = save_fldr + "/N3_260fps.avi"
-    output_file4 = save_fldr + "/N4_260fps.avi"
+    # output_file4 = save_fldr + "/N4_260fps.avi"
     # output_file5 = save_fldr + "/N4_260fps.avi"
 
     # file_written = capture_and_save_video(camera_device, output_file, duration, resolution=(640, 360), fps=260)
@@ -97,8 +97,8 @@ def record_cameras():
     north_cam2_260_worker = threading.Thread(target=capture_and_save_video,
                                             args=([camera_device3, output_file3, duration, resolution260, fps260, now]))
 
-    south_cam1_260_worker = threading.Thread(target=capture_and_save_video,
-                                             args=([camera_device4, output_file4, duration, resolution260, fps260, now]))
+    # south_cam1_260_worker = threading.Thread(target=capture_and_save_video,
+    #                                          args=([camera_device4, output_file4, duration, resolution260, fps260, now]))
 
 
     north_cam1_260worker.start()
@@ -107,7 +107,7 @@ def record_cameras():
     time.sleep(0.02)
     north_cam2_260_worker.start()
     time.sleep(0.02)
-    south_cam1_260_worker.start()
+    # south_cam1_260_worker.start()
 
     time.sleep(0.02)
 
@@ -259,7 +259,7 @@ def capture_and_save_video(camera_device, output_file, duration, resolution, fps
 def read_camera():
     while True:
         # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cap = cv2.VideoCapture("/dev/video4")  # this is the camera2
+        cap = cv2.VideoCapture("/dev/video0")  # this is the camera2
         # cap = cv2.VideoCapture("/dev/mycam1")
         # cap = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:1.1:1.0-video-index0")
         # cap = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0")  # cam3
@@ -307,7 +307,7 @@ def read_camera():
         # cam2
         time.sleep(1)
 
-        cap2 = cv2.VideoCapture("/dev/video6")  # this is cam1
+        cap2 = cv2.VideoCapture("/dev/video3")  # this is cam1
         # cap2 = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:1.3:1.0-video-index0")
         # cap2 = cv2.VideoCapture("/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0")  # cam3
 
@@ -367,7 +367,7 @@ def sending_emails():
     now = datetime.datetime.now()
     ssm = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
     if ssm > 12 * 3600:
-        sent_today = True
+        sent_today = False
     else:
         sent_today = False
 
@@ -377,13 +377,14 @@ def sending_emails():
         # print(ssm/3600)
         # print(sent_today)
         # if it is past midnight lets switch back to "havent sent today"
+        # print('Checking the time')
         if ssm < 3600:
             sent_today = False
         # if it is noon and we haven't sent today, lets send!
         elif ssm > 12 * 3600 and not sent_today:
             destination = ['artur_email', 'carlos_email', 'artur']
             # destination = ['artur_email']
-
+            print('Sending emails')
             if smtp_code.sendmail(destination):
                 print('I just sent the emails')
                 sent_today = True
@@ -395,6 +396,7 @@ def sending_emails():
         else:
             # otherwise lets sleep
             time.sleep(10)
+
     return True
 
 
@@ -406,12 +408,12 @@ if __name__ == "__main__":
 
     camera_update_worker = threading.Thread(target=read_camera, args=())
     # camera_update_worker.start()
-    print('Camera updater started')
+    # print('Camera updater started')
 
     time.sleep(20)
     email_send_worker = threading.Thread(target=sending_emails, args=())
-    email_send_worker.start()
-    print('Emailer is working')
+    # email_send_worker.start()
+    # print('Emailer is working')
 
     # print(app.route())
     # sys.exit()
